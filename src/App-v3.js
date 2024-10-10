@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import StarRaiting from "./StarRaiting";
 import { useMovies } from "./useMovies";
 import { useLocalStorageState } from "./useLocalStorageState";
-import { useKey } from "./useKey";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -108,11 +107,25 @@ function Logo() {
 function Search({ query, setQuery }) {
   const inputEl = useRef(null);
 
-  useKey("Enter", function () {
-    if (document.activeElement === inputEl.current) return;
-    inputEl.current.focus();
-    setQuery("");
-  });
+  useEffect(() => {
+    function callback(e) {
+      if (document.activeElement === inputEl.current) return;
+      if (e.key === "Enter") {
+        inputEl.current.focus();
+        console.log(e.key);
+        setQuery("");
+      }
+    }
+
+    document.addEventListener("keydown", callback);
+
+    return () => document.addEventListener("keydown", callback);
+  }, []);
+
+  // useEffect(function () {
+  //   const el = document.querySelector(".search");
+  //   el.focus();
+  // }, []);
 
   return (
     <input
@@ -224,9 +237,9 @@ function MovieDetail({ selectedId, onCloseMovie, onAddWatched, watched }) {
   //   [imdbRating]
   // );
 
-  // const isTop = imdbRating > 8;
+  const isTop = imdbRating > 8;
 
-  // const [avaragRating, setAvarageReating] = useState(0);
+  const [avaragRating, setAvarageReating] = useState(0);
 
   function handleAdd() {
     const newWatchedMovie = {
@@ -245,7 +258,20 @@ function MovieDetail({ selectedId, onCloseMovie, onAddWatched, watched }) {
     // setAvarageReating((avaragRating) => (avaragRating + userRating) / 2);
   }
 
-  useKey("Escape", onCloseMovie);
+  useEffect(
+    function () {
+      function handleKeyDown(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+      document.addEventListener("keydown", handleKeyDown);
+      return function () {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    },
+    [onCloseMovie]
+  );
 
   // const selectedMovie = movies.find((movie) => movie.imdbID === selectedId);
   useEffect(() => {
